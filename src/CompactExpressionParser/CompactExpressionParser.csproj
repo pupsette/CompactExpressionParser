@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>CompactExpressionParser</PackageId>
+    <PackageLicenseUrl>https://mit-license.org/</PackageLicenseUrl>
+    <DefineConstants>COMPACTEXPRESSIONPARSER_PUBLIC</DefineConstants>
+    <TargetFrameworks>netstandard2.0;net452;net462</TargetFrameworks>
+    <Title>Lightweight multi-purpose expression parser for .NET</Title>
+    <Description>A very compact expression parser for .NET applications and libraries.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageTags>expression;language;syntax;parser;.net</PackageTags>
+    <RepositoryUrl>https://github.com/pupsette/CompactExpressionParser.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/pupsette/CompactExpressionParser</PackageProjectUrl>
+    <Authors>pupsette</Authors>
+    <Version>0.4.0</Version>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <Configurations>Debug;Release;Sources</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Sources'">
+    <NuspecFile>CompactExpressionParser.Source.nuspec</NuspecFile>
+    <NuspecProperties>version=$(Version);authors=$(Authors);projectUrl=$(PackageProjectUrl);repository=$(RepositoryUrl);licenseUrl=$(PackageLicenseUrl)</NuspecProperties>
+  </PropertyGroup>
+
+</Project>

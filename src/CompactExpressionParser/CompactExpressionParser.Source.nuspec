@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>CompactExpressionParser.Sources</id>
+    <version>$version$</version>
+    <authors>$authors$</authors>
+    <licenseUrl>$licenseUrl$</licenseUrl>
+    <projectUrl>$projectUrl$</projectUrl>
+    <repository type="git" url="$repository$"></repository>
+    <title>Lightweight multi-purpose expression parser source code for embedding in C# projects</title>
+    <description>C# source code package for embedding a very compact expression parser in C# applications and libraries.</description>
+    <tags>expression syntax language parser .net</tags>
+    <contentFiles>
+      <files include="cs/any/**/*.cs" buildAction="Compile" />
+    </contentFiles>
+  </metadata>
+  <files>
+    <file src="*.cs" target="contentFiles/cs/any/CompactExpressionParser" />
+  </files>
+</package>
