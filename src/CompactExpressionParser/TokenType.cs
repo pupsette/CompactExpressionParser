@@ -9,6 +9,7 @@
         StringLiteral,
         NumberLiteral,
         Identifier,
+        Dot,
         Comma,
         Operator,
         End

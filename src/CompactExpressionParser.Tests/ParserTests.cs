@@ -15,7 +15,10 @@ namespace CompactExpressionParser.Tests
         [TestCase("\"\"+ +5", "LT;LT5;BO+")]
         [TestCase("\"\"+ ++5", "LT;LT5;UO++;BO+")]
         [TestCase("\"\" -> Whatsoever", "LT;IDWhatsoever;BO->")]
+        [TestCase("ToString()", "IDToString()")]
+        [TestCase(" ToString (  \t )", "IDToString()")]
         [TestCase("5(what)", "LT5(IDwhat)")]
+        [TestCase("5(what).ToString()", "LT5(IDwhat);MAToString()")]
         [TestCase("status IN [1,2,3 , 9]", "IDstatus;LS[LT1,LT2,LT3,LT9];BOIN")]
         [TestCase("[var1, 7+1, [1,2,3]]", "LS[IDvar1,LT7;LT1;BO+,LS[LT1,LT2,LT3]]")]
         public void Parse(string input, string expectedTree)
@@ -42,8 +45,8 @@ namespace CompactExpressionParser.Tests
             {
                 case Literal literal:
                     return "LT" + literal.Value;
-                case Identifier itendifier:
-                    return "ID" + itendifier.Name;
+                case Identifier identifier:
+                    return "ID" + identifier.Name;
                 case List list:
                     return "LS[" + string.Join(",", list.Items.Select(Rewrite)) + "]";
                 case BinaryOperator binOp:
@@ -54,6 +57,8 @@ namespace CompactExpressionParser.Tests
                     return Rewrite(callOp.Callable) + "(" + string.Join(",", callOp.Arguments.Select(Rewrite)) + ")";
                 case Subscript subsc:
                     return Rewrite(subsc.Indexable) + "[" + string.Join(",", subsc.Arguments.Select(Rewrite)) + "]";
+                case MemberAccess member:
+                    return Rewrite(member.Source) + ";MA" + member.MemberName;
                 default:
                     throw new InvalidOperationException();
             }

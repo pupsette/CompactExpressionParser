@@ -11,6 +11,15 @@ namespace CompactExpressionParser
 
         private readonly string[] mAllOperators;
 
+        public bool AllowSubscripts { get; set; } = true;
+        public bool AllowStringLiterals { get; set; } = true;
+        public bool AllowNumberLiterals { get; set; } = true;
+        public bool AllowBooleanLiterals { get; set; } = true;
+        public bool AllowMemberAccess { get; set; } = true;
+        public bool AllowInvocations { get; set; } = true;
+        public bool AllowLists { get; set; } = true;
+        public bool AllowParenthesis { get; set; } = true;
+
         public Parser(string[] unaryOperators, string[] binaryOperators)
         {
             for (int i = 0; i < unaryOperators.Length; i++)
@@ -91,27 +100,36 @@ namespace CompactExpressionParser
                 // invocation
                 if (stream.Current.Type == TokenType.OpeningParenthesis)
                 {
+                    if (!AllowInvocations)
+                        throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber}. Invocations are not allowed.");
+
                     int line = stream.Current.LineNumber;
                     int pos = stream.Current.Position;
                     stream.MoveNext(); // skip '('
                     List<Expression> arguments = new List<Expression>();
                     for (; ; )
                     {
-                        arguments.Add(ParseL1(stream));
                         if (stream.Current.Type == TokenType.ClosingParenthesis)
                         {
                             stream.MoveNext(); // skip ')'
                             operand = new Invocation(operand, arguments, line, pos);
                             break;
                         }
-                        if (stream.Current.Type != TokenType.Comma)
-                            throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} in invocation arguments.");
-                        stream.MoveNext(); // skip ','
+                        if (arguments.Count > 0)
+                        {
+                            if (stream.Current.Type != TokenType.Comma)
+                                throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} in invocation arguments.");
+                            stream.MoveNext(); // skip ','
+                        }
+                        arguments.Add(ParseL1(stream));
                     }
                 }
                 // subscript
                 else if (stream.Current.Type == TokenType.OpeningBrackets)
                 {
+                    if (!AllowSubscripts)
+                        throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber}. Subscripts are not allowed.");
+
                     int line = stream.Current.LineNumber;
                     int pos = stream.Current.Position;
                     stream.MoveNext(); // skip '['
@@ -129,6 +147,21 @@ namespace CompactExpressionParser
                             throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} in subscript arguments.");
                         stream.MoveNext(); // skip ','
                     }
+                }
+                // member access
+                else if (stream.Current.Type == TokenType.Dot)
+                {
+                    if (!AllowMemberAccess)
+                        throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber}. Member access syntax is not allowed.");
+
+                    int line = stream.Current.LineNumber;
+                    int pos = stream.Current.Position;
+                    stream.MoveNext(); // skip '.'
+                    if (stream.Current.Type != TokenType.Identifier)
+                        throw new Exception($"A member name must follow the '.' at position {stream.Current.Position} in line {stream.Current.LineNumber}.");
+
+                    operand = new MemberAccess(operand, stream.Current.StringValue, line, pos);
+                    stream.MoveNext(); // skip the member name
                 }
                 else
                     break;
@@ -148,28 +181,7 @@ namespace CompactExpressionParser
                 Expression expr = ParseL2(stream);
                 return new UnaryOperator(op, expr, line, pos);
             }
-            //if (stream.Current.Type == TokenType.Identifier && stream.Next.Type == TokenType.OpeningParenthesis)
-            //{
-            //    int line = stream.Current.LineNumber;
-            //    int pos = stream.Current.Position;
-            //    string methodName = stream.Current.StringValue;
-            //    stream.MoveNext(); // goto '('
-            //    stream.MoveNext(); // skip '('
-            //    List<Expression> arguments = new List<Expression>();
-            //    for (; ; )
-            //    {
-            //        arguments.Add(ParseL1(stream));
-            //        if (stream.Current.Type == TokenType.ClosingParenthesis)
-            //        {
-            //            stream.MoveNext(); // skip ')'
-            //            return new Invocation(methodName, arguments, line, pos);
-            //        }
-            //        if (stream.Current.Type != TokenType.Comma)
-            //            throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} in invocation list of method '{methodName}'.");
-            //        stream.MoveNext(); // skip ','
-            //    }
-            //}
-            if (stream.Current.Type == TokenType.OpeningBrackets)
+            if (stream.Current.Type == TokenType.OpeningBrackets && AllowLists) // list expression
             {
                 int line = stream.Current.LineNumber;
                 int pos = stream.Current.Position;
@@ -188,7 +200,7 @@ namespace CompactExpressionParser
                     stream.MoveNext(); // skip ','
                 }
             }
-            if (stream.Current.Type == TokenType.OpeningParenthesis)
+            if (stream.Current.Type == TokenType.OpeningParenthesis && AllowParenthesis)
             {
                 stream.MoveNext(); // skip '('
                 Expression result = ParseL1(stream);
@@ -210,7 +222,7 @@ namespace CompactExpressionParser
                 else
                     return new Identifier(value, line, pos);
             }
-            else if (stream.Current.Type == TokenType.StringLiteral)
+            else if (stream.Current.Type == TokenType.StringLiteral && AllowStringLiterals)
             {
                 int line = stream.Current.LineNumber;
                 int pos = stream.Current.Position;
@@ -218,7 +230,7 @@ namespace CompactExpressionParser
                 stream.MoveNext(); // skip literal
                 return new Literal(value, line, pos);
             }
-            else if (stream.Current.Type == TokenType.NumberLiteral)
+            else if (stream.Current.Type == TokenType.NumberLiteral && AllowNumberLiterals)
             {
                 int line = stream.Current.LineNumber;
                 int pos = stream.Current.Position;

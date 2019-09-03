@@ -66,6 +66,12 @@ namespace CompactExpressionParser
                 mCurrentInputOffset++;
                 return;
             }
+            if (c == '.')
+            {
+                mNext.Type = TokenType.Dot;
+                mCurrentInputOffset++;
+                return;
+            }
             if (char.IsDigit(c) || ((c == '-' || c == '+') && char.IsDigit(Lookahead()) && NumberLiteralMayFollow()))
             {
                 mNext.NumberValue = ParseNumber();
