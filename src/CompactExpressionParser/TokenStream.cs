@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace CompactExpressionParser
@@ -10,6 +9,12 @@ namespace CompactExpressionParser
         {
             mInput = input;
             mOperators = operators;
+            mMaxOperatorChars = 0;
+            foreach (string op in operators)
+            {
+                if (op.Length > mMaxOperatorChars)
+                    mMaxOperatorChars = op.Length;
+            }
             mCurrent.Type = TokenType.End;
             mNext.Type = TokenType.End;
             mCurrentLine = 1;
@@ -42,6 +47,18 @@ namespace CompactExpressionParser
                 mCurrentInputOffset++;
                 return;
             }
+            if (c == '{')
+            {
+                mNext.Type = TokenType.OpeningBraces;
+                mCurrentInputOffset++;
+                return;
+            }
+            if (c == '}')
+            {
+                mNext.Type = TokenType.ClosingBraces;
+                mCurrentInputOffset++;
+                return;
+            }
             if (c == '[')
             {
                 mNext.Type = TokenType.OpeningBrackets;
@@ -58,6 +75,12 @@ namespace CompactExpressionParser
             {
                 mNext.StringValue = ParseStringLiteral();
                 mNext.Type = TokenType.StringLiteral;
+                return;
+            }
+            if (c == ';')
+            {
+                mNext.Type = TokenType.Semicolon;
+                mCurrentInputOffset++;
                 return;
             }
             if (c == ',')
@@ -78,15 +101,25 @@ namespace CompactExpressionParser
                 mNext.Type = TokenType.NumberLiteral;
                 return;
             }
+            string bestMatchingOperator = null;
             foreach (string op in mOperators)
             {
-                if (Matches(op))
+                if (OperatorMatches(op))
                 {
-                    mCurrentInputOffset += op.Length;
-                    mNext.StringValue = op;
-                    mNext.Type = TokenType.Operator;
-                    return;
+                    if (bestMatchingOperator == null || bestMatchingOperator.Length < op.Length)
+                    {
+                        bestMatchingOperator = op;
+                        if (bestMatchingOperator.Length == mMaxOperatorChars)
+                            break;
+                    }
                 }
+            }
+            if (bestMatchingOperator != null)
+            {
+                mCurrentInputOffset += bestMatchingOperator.Length;
+                mNext.StringValue = bestMatchingOperator;
+                mNext.Type = TokenType.Operator;
+                return;
             }
             if (char.IsLetter(c))
             {
@@ -259,7 +292,7 @@ namespace CompactExpressionParser
                 return char.MinValue;
         }
 
-        private bool Matches(string seq)
+        private bool OperatorMatches(string seq)
         {
             for (int i = 0; i < seq.Length; i++)
             {
@@ -269,6 +302,9 @@ namespace CompactExpressionParser
                 if (mInput[inputIndex] != seq[i])
                     return false;
             }
+            int nextIndex = mCurrentInputOffset + seq.Length;
+            if (nextIndex < mInput.Length && char.IsLetter(mInput[nextIndex]) && char.IsLetterOrDigit(seq[seq.Length - 1]))
+                return false;
             return true;
         }
 
@@ -277,6 +313,7 @@ namespace CompactExpressionParser
         private int mCurrentInputOffset;
         private int mCurrentLine;
         private int mCurrentLineStartOffset;
+        private int mMaxOperatorChars;
         private Token mCurrent, mNext;
 
         public Token Current { get { return mCurrent; } }

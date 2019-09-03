@@ -29,6 +29,22 @@ namespace CompactExpressionParser.Tests
             Assert.That(rewritten, Is.EqualTo(expectedTree));
         }
 
+        [TestCase("=|==","5=5", "LT5;LT5;BO=")]
+        [TestCase("=|==", "5=5 == 5", "LT5;LT5;BO=;LT5;BO==")]
+        [TestCase("=|==", "5=5==5", "LT5;LT5;BO=;LT5;BO==")]
+        [TestCase("+|-|==|and|or", "andor", "IDandor")]
+        [TestCase("+|-|==|and|or", "id.andy", "IDid;MAandy")]
+        [TestCase("+|-|==|and|or", "id+id", "IDid;IDid;BO+")]
+        [TestCase("+|-|==|and|or", "5 == 5 and6+6==12 or true", "LT5;LT5;BO==;LT6;LT6;BO+;LT12;BO==;BOand;LTTrue;BOor")]
+        public void OperatorMatching(string operatorsStr, string input, string expectedTree)
+        {
+            var parser = new Parser(null, operatorsStr.Split('|'));
+            var tree = parser.Parse(input);
+            string rewritten = Rewrite(tree);
+            Console.WriteLine(rewritten);
+            Assert.That(rewritten, Is.EqualTo(expectedTree));
+        }
+
         [TestCase("-")]
         [TestCase("")]
         [TestCase("\"sdasde'")]
@@ -36,6 +52,17 @@ namespace CompactExpressionParser.Tests
         public void Parsing_Should_Fail(string input)
         {
             TestDelegate parseAction = () => PARSER.Parse(input);
+            Assert.That(parseAction, Throws.Exception);
+        }
+
+        [TestCase("=|==", "5===5")]
+        [TestCase("+|-|==|and|or", "1 andor 2")]
+        [TestCase("+|-|==|and|or", "id andid")]
+        [TestCase("+|-|==|and|or", "id.and")]
+        public void Parsing_Should_Fail_With_Special_Operators(string operatorsStr, string input)
+        {
+            var parser = new Parser(null, operatorsStr.Split('|'));
+            TestDelegate parseAction = () => parser.Parse(input);
             Assert.That(parseAction, Throws.Exception);
         }
 

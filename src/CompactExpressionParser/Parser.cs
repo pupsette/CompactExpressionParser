@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace CompactExpressionParser
 {
@@ -22,7 +21,12 @@ namespace CompactExpressionParser
 
         public Parser(string[] unaryOperators, string[] binaryOperators)
         {
-            for (int i = 0; i < unaryOperators.Length; i++)
+            int unaryOperatorCount = unaryOperators?.Length ?? 0;
+            int binaryOperatorCount = binaryOperators?.Length ?? 0;
+            mAllOperators = new string[unaryOperatorCount + binaryOperatorCount];
+            int totalIndex = 0;
+
+            for (int i = 0; i < unaryOperatorCount; i++)
             {
                 if (string.IsNullOrWhiteSpace(unaryOperators[i]))
                     throw new ArgumentException("The given unary operator is not valid. It must not be null or white-space.");
@@ -31,16 +35,16 @@ namespace CompactExpressionParser
                     throw new ArgumentException($"The given unary operator '{unaryOperators[i]}' is not valid. It must not start with a letter.");
 
                 mUnaryOperators.Add(unaryOperators[i]);
+                mAllOperators[totalIndex++] = unaryOperators[i];
             }
-            for (int i = 0; i < binaryOperators.Length; i++)
+            for (int i = 0; i < binaryOperatorCount; i++)
             {
                 if (string.IsNullOrWhiteSpace(binaryOperators[i]))
                     throw new ArgumentException("The given binary operator is not valid. It must not be null or white-space.");
 
                 mBinaryOperators[binaryOperators[i]] = binaryOperators.Length - i;
+                mAllOperators[totalIndex++] = binaryOperators[i];
             }
-
-            mAllOperators = unaryOperators.Concat(binaryOperators).ToArray();
         }
 
         public Expression Parse(string input)
@@ -54,6 +58,98 @@ namespace CompactExpressionParser
             if (stream.Current.Type != TokenType.End)
                 throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber}.");
             return expr;
+        }
+
+        private class Statement
+        {
+        }
+
+        private class SingleStatement : Statement
+        {
+            public SingleStatement(Expression expression)
+            {
+                Expression = expression;
+            }
+
+            public Expression Expression { get; }
+        }
+
+        private class Block : Statement
+        {
+            public Block(Statement[] statements)
+            {
+                Statements = statements;
+            }
+
+            public Statement[] Statements { get; }
+        }
+
+        private class ConditionalStatement : Statement
+        {
+            public ConditionalStatement(Expression condition, Statement trueStatement, Statement falseStatement)
+            {
+                Condition = condition;
+                True = trueStatement;
+                False = falseStatement;
+            }
+
+            public Expression Condition { get; }
+            public Statement True { get; }
+            public Statement False { get; }
+        }
+
+        private Statement ParseStatement(TokenStream stream)
+        {
+            if (stream.Current.Type == TokenType.ClosingBraces)
+            {
+                List<Statement> statements = new List<Statement>();
+                stream.MoveNext(); // skip '{'
+                for (; ; )
+                {
+                    if (stream.Current.Type == TokenType.ClosingBraces)
+                    {
+                        stream.MoveNext(); // skip '}'
+                        return new Block(statements.ToArray());
+                    }
+
+                    statements.Add(ParseStatement(stream));
+                    if (stream.Current.Type != TokenType.Semicolon)
+                        throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} after statement.");
+                    stream.MoveNext(); // skip ';'
+                }
+            }
+            else if (stream.Current.Type == TokenType.Identifier && stream.Current.StringValue == "if")
+            {
+                stream.MoveNext(); // skip 'if'
+                if (stream.Current.Type != TokenType.OpeningParenthesis)
+                    throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} after if statement.");
+                stream.MoveNext(); // skip '('
+
+                Expression condition = ParseL1(stream);
+
+                if (stream.Current.Type != TokenType.ClosingParenthesis)
+                    throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} after condition of if statement.");
+                stream.MoveNext(); // skip ')'
+
+                Statement ifblock = ParseStatement(stream);
+                Statement elseblock = null;
+
+                if (stream.Current.Type == TokenType.Identifier && stream.Current.StringValue == "else")
+                {
+                    stream.MoveNext(); // skip 'else'
+                    elseblock = ParseStatement(stream);
+                }
+
+                return new ConditionalStatement(condition, ifblock, elseblock);
+            }
+            else
+            {
+                var result = new SingleStatement(ParseL2(stream));
+                if (stream.Current.Type != TokenType.Semicolon)
+                    throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} after statement.");
+                stream.MoveNext(); // skip ';'
+                return result;
+            }
         }
 
         private Expression ParseL1(TokenStream stream)
@@ -215,9 +311,9 @@ namespace CompactExpressionParser
                 int pos = stream.Current.Position;
                 string value = stream.Current.StringValue;
                 stream.MoveNext(); // skip identifier
-                if (value == "true")
+                if (AllowBooleanLiterals && value == "true")
                     return new Literal(true, line, pos);
-                else if (value == "false")
+                else if (AllowBooleanLiterals && value == "false")
                     return new Literal(false, line, pos);
                 else
                     return new Identifier(value, line, pos);

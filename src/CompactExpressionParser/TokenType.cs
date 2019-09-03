@@ -6,10 +6,13 @@
         ClosingParenthesis,
         OpeningBrackets,
         ClosingBrackets,
+        OpeningBraces,
+        ClosingBraces,
         StringLiteral,
         NumberLiteral,
         Identifier,
         Dot,
+        Semicolon,
         Comma,
         Operator,
         End
