@@ -1,6 +1,6 @@
 ﻿namespace CompactExpressionParser
 {
-    public struct Token
+    internal struct Token
     {
         public TokenType Type;
         public string StringValue;

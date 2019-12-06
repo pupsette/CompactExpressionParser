@@ -3,22 +3,79 @@ using System.Collections.Generic;
 
 namespace CompactExpressionParser
 {
-    public class Parser
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class Parser
     {
         private readonly HashSet<string> mUnaryOperators = new HashSet<string>();
         private readonly Dictionary<string, int> mBinaryOperators = new Dictionary<string, int>();
 
         private readonly string[] mAllOperators;
 
+        /// <summary>
+        /// A flag, controlling whether subscripts are allowed or not. E.g. expression
+        /// myList[2] has a subscript (with a single parameter).
+        /// </summary>
         public bool AllowSubscripts { get; set; } = true;
+
+        /// <summary>
+        /// A flag, controlling whether string literals are allowed or not. E.g. expression
+        /// "myString" is a string literal.
+        /// </summary>
         public bool AllowStringLiterals { get; set; } = true;
+
+        /// <summary>
+        /// A flag, controlling whether number literals are allowed or not. E.g. expression
+        /// 2.52 is a number literal.
+        /// </summary>
         public bool AllowNumberLiterals { get; set; } = true;
+
+        /// <summary>
+        /// A flag, controlling whether boolean literals are allowed or not. E.g. expression
+        /// true is a boolean literal.
+        /// </summary>
         public bool AllowBooleanLiterals { get; set; } = true;
+
+        /// <summary>
+        /// A flag, controlling whether the dot-notation for member access is allowed or not.
+        /// E.g. expression myList.MyMember has a member access.
+        /// </summary>
         public bool AllowMemberAccess { get; set; } = true;
+
+        /// <summary>
+        /// A flag, controlling whether invocations are allowed or not. E.g. expression
+        /// myMethod() has an invocation (without parameters).
+        /// </summary>
         public bool AllowInvocations { get; set; } = true;
+
+        /// <summary>
+        /// A flag, controlling whether list expressions are allowed or not. E.g. expression
+        /// [1,2,3,4] is a list expression.
+        /// </summary>
         public bool AllowLists { get; set; } = true;
+
+        /// <summary>
+        /// A flag, controlling whether parenthesis are allowed in expressions. E.g. expression
+        /// (5) uses parenthesis. This does not disallow parenthesis in general, parsing of 
+        /// invocations is unaffected.
+        /// </summary>
         public bool AllowParenthesis { get; set; } = true;
 
+        /// <summary>
+        /// A flag, controlling whether conditional statements are allowed. E.g. statement
+        /// if (1 == 1) {} is a conditional statement. If you do not use the
+        /// <see cref="ParseStatements(string)"/> method, this setting is irrelevant.
+        /// </summary>
+        public bool AllowConditionalStatements { get; set; } = true;
+
+        /// <summary>
+        /// Initializes a new parser with the given set of operators.
+        /// </summary>
+        /// <param name="unaryOperators">The set of unary operators.</param>
+        /// <param name="binaryOperators">The set of binary operators ordered by precedence.</param>
         public Parser(string[] unaryOperators, string[] binaryOperators)
         {
             int unaryOperatorCount = unaryOperators?.Length ?? 0;
@@ -47,7 +104,7 @@ namespace CompactExpressionParser
             }
         }
 
-        public Expression Parse(string input)
+        public Expression ParseExpression(string input)
         {
             var stream = new TokenStream(input, mAllOperators);
             stream.MoveNext();
@@ -60,65 +117,39 @@ namespace CompactExpressionParser
             return expr;
         }
 
-        private class Statement
+        public BlockStatement ParseStatements(string input)
         {
+            var stream = new TokenStream(input, mAllOperators);
+            stream.MoveNext();
+            if (stream.Current.Type == TokenType.End)
+                return new BlockStatement(new Statement[0]);
+
+            return ParseBlock(stream, TokenType.End);
         }
 
-        private class SingleStatement : Statement
+        private BlockStatement ParseBlock(TokenStream stream, TokenType endToken)
         {
-            public SingleStatement(Expression expression)
+            List<Statement> statements = new List<Statement>();
+            for (; ; )
             {
-                Expression = expression;
+                if (stream.Current.Type == endToken)
+                {
+                    stream.MoveNext(); // skip end token
+                    return new BlockStatement(statements.ToArray());
+                }
+
+                statements.Add(ParseStatement(stream));
             }
-
-            public Expression Expression { get; }
-        }
-
-        private class Block : Statement
-        {
-            public Block(Statement[] statements)
-            {
-                Statements = statements;
-            }
-
-            public Statement[] Statements { get; }
-        }
-
-        private class ConditionalStatement : Statement
-        {
-            public ConditionalStatement(Expression condition, Statement trueStatement, Statement falseStatement)
-            {
-                Condition = condition;
-                True = trueStatement;
-                False = falseStatement;
-            }
-
-            public Expression Condition { get; }
-            public Statement True { get; }
-            public Statement False { get; }
         }
 
         private Statement ParseStatement(TokenStream stream)
         {
-            if (stream.Current.Type == TokenType.ClosingBraces)
+            if (stream.Current.Type == TokenType.OpeningBraces)
             {
-                List<Statement> statements = new List<Statement>();
                 stream.MoveNext(); // skip '{'
-                for (; ; )
-                {
-                    if (stream.Current.Type == TokenType.ClosingBraces)
-                    {
-                        stream.MoveNext(); // skip '}'
-                        return new Block(statements.ToArray());
-                    }
-
-                    statements.Add(ParseStatement(stream));
-                    if (stream.Current.Type != TokenType.Semicolon)
-                        throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} after statement.");
-                    stream.MoveNext(); // skip ';'
-                }
+                return ParseBlock(stream, TokenType.ClosingBraces);
             }
-            else if (stream.Current.Type == TokenType.Identifier && stream.Current.StringValue == "if")
+            else if (AllowConditionalStatements && stream.Current.Type == TokenType.Identifier && stream.Current.StringValue == "if")
             {
                 stream.MoveNext(); // skip 'if'
                 if (stream.Current.Type != TokenType.OpeningParenthesis)
@@ -144,7 +175,7 @@ namespace CompactExpressionParser
             }
             else
             {
-                var result = new SingleStatement(ParseL2(stream));
+                var result = new SingleStatement(ParseL1(stream));
                 if (stream.Current.Type != TokenType.Semicolon)
                     throw new Exception($"Unexpected token {stream.Current} at position {stream.Current.Position} in line {stream.Current.LineNumber} after statement.");
                 stream.MoveNext(); // skip ';'

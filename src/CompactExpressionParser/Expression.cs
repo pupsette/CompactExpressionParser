@@ -1,6 +1,11 @@
 ﻿namespace CompactExpressionParser
 {
-    public class Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    abstract class Expression
     {
         public Expression(int lineNumber, int position)
         {

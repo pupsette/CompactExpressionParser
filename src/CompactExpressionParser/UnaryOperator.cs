@@ -1,6 +1,11 @@
 ﻿namespace CompactExpressionParser
 {
-    public class UnaryOperator : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class UnaryOperator : Expression
     {
         public UnaryOperator(string op, Expression expr, int lineNumber, int position)
             : base(lineNumber, position)

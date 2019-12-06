@@ -1,6 +1,11 @@
 ﻿namespace CompactExpressionParser
 {
-    public class List : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class List : Expression
     {
         public List(Expression[] items, int lineNumber, int position)
             : base(lineNumber, position)

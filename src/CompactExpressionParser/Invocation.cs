@@ -2,7 +2,12 @@
 
 namespace CompactExpressionParser
 {
-    public class Invocation : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class Invocation : Expression
     {
         public Invocation(Expression callable, List<Expression> arguments, int lineNumber, int position)
             : base(lineNumber, position)

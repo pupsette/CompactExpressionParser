@@ -1,6 +1,11 @@
 ﻿namespace CompactExpressionParser
 {
-    public class BinaryOperator : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class BinaryOperator : Expression
     {
         public BinaryOperator(Expression expr1, string op, Expression expr2, int lineNumber, int position)
             : base (lineNumber, position)

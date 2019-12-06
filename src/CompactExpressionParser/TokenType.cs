@@ -1,6 +1,6 @@
 ﻿namespace CompactExpressionParser
 {
-    public enum TokenType
+    internal enum TokenType
     {
         OpeningParenthesis,
         ClosingParenthesis,

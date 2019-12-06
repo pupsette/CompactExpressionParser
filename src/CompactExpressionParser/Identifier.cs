@@ -1,6 +1,11 @@
 ﻿namespace CompactExpressionParser
 {
-    public class Identifier : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class Identifier : Expression
     {
         public Identifier(string identifier, int lineNumber, int position)
             : base(lineNumber, position)

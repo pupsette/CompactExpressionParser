@@ -5,7 +5,7 @@ using System.Linq;
 namespace CompactExpressionParser.Tests
 {
     [TestFixture]
-    public class ParserTests
+    public class ParseExpressionTests
     {
         private static readonly Parser PARSER = new Parser(new[] { "!", "++" }, new[] { "*", "+", "->", "-", "IN" });
 
@@ -23,7 +23,7 @@ namespace CompactExpressionParser.Tests
         [TestCase("[var1, 7+1, [1,2,3]]", "LS[IDvar1,LT7;LT1;BO+,LS[LT1,LT2,LT3]]")]
         public void Parse(string input, string expectedTree)
         {
-            var tree = PARSER.Parse(input);
+            var tree = PARSER.ParseExpression(input);
             string rewritten = Rewrite(tree);
             Console.WriteLine(rewritten);
             Assert.That(rewritten, Is.EqualTo(expectedTree));
@@ -39,7 +39,7 @@ namespace CompactExpressionParser.Tests
         public void OperatorMatching(string operatorsStr, string input, string expectedTree)
         {
             var parser = new Parser(null, operatorsStr.Split('|'));
-            var tree = parser.Parse(input);
+            var tree = parser.ParseExpression(input);
             string rewritten = Rewrite(tree);
             Console.WriteLine(rewritten);
             Assert.That(rewritten, Is.EqualTo(expectedTree));
@@ -51,7 +51,7 @@ namespace CompactExpressionParser.Tests
         [TestCase("\"sdasde")]
         public void Parsing_Should_Fail(string input)
         {
-            TestDelegate parseAction = () => PARSER.Parse(input);
+            TestDelegate parseAction = () => PARSER.ParseExpression(input);
             Assert.That(parseAction, Throws.Exception);
         }
 
@@ -62,11 +62,11 @@ namespace CompactExpressionParser.Tests
         public void Parsing_Should_Fail_With_Special_Operators(string operatorsStr, string input)
         {
             var parser = new Parser(null, operatorsStr.Split('|'));
-            TestDelegate parseAction = () => parser.Parse(input);
+            TestDelegate parseAction = () => parser.ParseExpression(input);
             Assert.That(parseAction, Throws.Exception);
         }
 
-        private static string Rewrite(Expression ex)
+        internal static string Rewrite(Expression ex)
         {
             switch (ex)
             {

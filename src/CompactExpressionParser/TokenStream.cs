@@ -3,7 +3,7 @@ using System.Text;
 
 namespace CompactExpressionParser
 {
-    public class TokenStream
+    internal class TokenStream
     {
         public TokenStream(string input, string[] operators)
         {

@@ -1,6 +1,11 @@
 ﻿namespace CompactExpressionParser
 {
-    public class Literal : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class Literal : Expression
     {
         public Literal(object value, int lineNumber, int position)
             : base(lineNumber, position)

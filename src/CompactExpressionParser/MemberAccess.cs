@@ -1,6 +1,11 @@
 ﻿namespace CompactExpressionParser
 {
-    public class MemberAccess : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class MemberAccess : Expression
     {
         public MemberAccess(Expression source, string memberName, int lineNumber, int position)
             : base(lineNumber, position)

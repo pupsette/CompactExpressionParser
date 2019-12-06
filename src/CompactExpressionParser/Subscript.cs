@@ -2,7 +2,12 @@
 
 namespace CompactExpressionParser
 {
-    public class Subscript : Expression
+#if COMPACTEXPRESSIONPARSER_PUBLIC
+    public
+#else
+    internal
+#endif
+    sealed class Subscript : Expression
     {
         public Subscript(Expression indexable, List<Expression> arguments, int lineNumber, int position)
             : base(lineNumber, position)
