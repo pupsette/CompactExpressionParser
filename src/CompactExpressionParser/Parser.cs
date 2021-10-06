@@ -12,7 +12,6 @@ namespace CompactExpressionParser
     {
         private readonly HashSet<string> mUnaryOperators = new HashSet<string>();
         private readonly Dictionary<string, int> mBinaryOperators = new Dictionary<string, int>();
-
         private readonly string[] mAllOperators;
 
         /// <summary>
