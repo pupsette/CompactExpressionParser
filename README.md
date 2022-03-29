@@ -31,7 +31,7 @@ status IN [1,2,3,7]
 ### Literals
 `true`, `false` are parsed into boolean values.
 `"Hello World!"`, `"Escaped\nsequence with \u07 special chars."` are string literals.
-`192`, `0.91`, `-19` are numeric literals.
+`192`, `0.91`, `-19` are numeric literals, which may be either of type `double` or `long`.
 
 ### Identifier
 `myIdentifier` (anything starting with a letter, which is not `true`, `false`, or one of the user-defined operators)
@@ -41,6 +41,9 @@ status IN [1,2,3,7]
 
 ### Unary operators
 `!5`, `~"example"`, `#myIdentifier`
+
+### Member access
+`myIdentifier.myProperty`, `"example".length`, `getObject().myMethod()`
 
 ### Invocations
 `hashCode("with this string")`, `hashCode("with this string", salt, true)`
