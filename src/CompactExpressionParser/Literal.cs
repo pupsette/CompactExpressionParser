@@ -15,6 +15,9 @@ namespace CompactExpressionParser
             Value = value;
         }
 
+        /// <summary>
+        /// The value may be one of the following types: double, long, string or bool.
+        /// </summary>
         public object Value { get; }
 
         public override string ToString()
