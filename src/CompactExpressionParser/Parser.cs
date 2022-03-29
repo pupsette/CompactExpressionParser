@@ -356,11 +356,11 @@ namespace CompactExpressionParser
                 stream.MoveNext(); // skip literal
                 return new Literal(value, line, pos);
             }
-            else if (stream.Current.Type == TokenType.NumberLiteral && AllowNumberLiterals)
+            else if (stream.Current.IsNumber && AllowNumberLiterals)
             {
                 int line = stream.Current.LineNumber;
                 int pos = stream.Current.Position;
-                object value = stream.Current.NumberValue;
+                object value = stream.Current.Number;
                 stream.MoveNext(); // skip literal
                 return new Literal(value, line, pos);
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text;
 
 namespace CompactExpressionParser
@@ -97,8 +98,7 @@ namespace CompactExpressionParser
             }
             if (char.IsDigit(c) || ((c == '-' || c == '+') && char.IsDigit(Lookahead()) && NumberLiteralMayFollow()))
             {
-                mNext.NumberValue = ParseNumber();
-                mNext.Type = TokenType.NumberLiteral;
+                ParseNumber();
                 return;
             }
             string bestMatchingOperator = null;
@@ -141,19 +141,32 @@ namespace CompactExpressionParser
             mNext.Position = mCurrentInputOffset - mCurrentLineStartOffset;
         }
 
-        private double ParseNumber()
+        private void ParseNumber()
         {
             int startIndex = mCurrentInputOffset;
             if (mInput[mCurrentInputOffset] == '-' || mInput[mCurrentInputOffset] == '+')
                 mCurrentInputOffset++;
 
+            bool hasDecimalPoint = false;
             while (mCurrentInputOffset < mInput.Length && (char.IsDigit(mInput[mCurrentInputOffset]) || (mInput[mCurrentInputOffset] == '.' && char.IsDigit(Lookahead()))))
+            {
+                hasDecimalPoint = hasDecimalPoint || (mInput[mCurrentInputOffset] == '.');
                 mCurrentInputOffset++;
+            }
             string numberStr = mInput.Substring(startIndex, mCurrentInputOffset - startIndex);
-            double result;
-            if (!double.TryParse(numberStr, out result))
-                throw new Exception($"Invalid number '{numberStr}' in line {mNext.LineNumber} at position {mNext.Position} in string \"{mInput}\".");
-            return result;
+
+            if (!hasDecimalPoint)
+            {
+                mNext.Type = TokenType.IntegerLiteral;
+                if (!long.TryParse(numberStr, out mNext.IntegerValue))
+                    throw new Exception($"Invalid integer number '{numberStr}' in line {mNext.LineNumber} at position {mNext.Position} in string \"{mInput}\".");
+            }
+            else
+            {
+                mNext.Type = TokenType.FloatLiteral;
+                if (!double.TryParse(numberStr, NumberStyles.Float, CultureInfo.InvariantCulture, out mNext.FloatValue))
+                    throw new Exception($"Invalid number '{numberStr}' in line {mNext.LineNumber} at position {mNext.Position} in string \"{mInput}\".");
+            }
         }
 
         private static bool TryHexTextToInt(string text, int start, int end, out int value)

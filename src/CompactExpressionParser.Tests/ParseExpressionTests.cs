@@ -29,6 +29,27 @@ namespace CompactExpressionParser.Tests
             Assert.That(rewritten, Is.EqualTo(expectedTree));
         }
 
+        [TestCase("-1.25", -1.25)]
+        [TestCase("-1.00", -1)]
+        [TestCase("100.5", 100.5)]
+        [TestCase("+100.5", 100.5)]
+        public void ParseToFloatingPoint(string input, double expected)
+        {
+            var tree = PARSER.ParseExpression(input);
+            Assert.That((tree as Literal).Value, Is.InstanceOf<double>());
+            Assert.That((tree as Literal).Value, Is.EqualTo(expected));
+        }
+
+        [TestCase("-100", -100)]
+        [TestCase("+1", 1)]
+        [TestCase("10058746871235", 10058746871235)]
+        public void ParseToInteger(string input, long expected)
+        {
+            var tree = PARSER.ParseExpression(input);
+            Assert.That((tree as Literal).Value, Is.InstanceOf<long>());
+            Assert.That((tree as Literal).Value, Is.EqualTo(expected));
+        }
+
         [TestCase("=|==","5=5", "LT5;LT5;BO=")]
         [TestCase("=|==", "5=5 == 5", "LT5;LT5;BO=;LT5;BO==")]
         [TestCase("=|==", "5=5==5", "LT5;LT5;BO=;LT5;BO==")]

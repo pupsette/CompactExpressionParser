@@ -1,4 +1,6 @@
-﻿namespace CompactExpressionParser
+﻿using System.Globalization;
+
+namespace CompactExpressionParser
 {
 #if COMPACTEXPRESSIONPARSER_PUBLIC
     public
@@ -19,6 +21,8 @@
         {
             if (Value is string)
                 return EncodeStringLiteral((string)Value);
+            if (Value is double dbl)
+                return dbl.ToString(CultureInfo.InvariantCulture);
             return Value?.ToString();
         }
 
